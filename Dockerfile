@@ -9,13 +9,10 @@ ENV https_proxy $PROXY
 # Misc Environment Variables
 ENV PATH $PATH:/usr/local/go/bin
 
-# Install Constellation
-ADD ./dependencies/constellation_v0.1.0_ubuntu1604.tar.gz /usr/local/bin
-
 # Install Pre Requisites
 RUN GO_RELEASE=go1.7.3.linux-amd64.tar.gz                                               && \
     apt-get update                                                                      && \
-    apt-get install -y wget software-properties-common unzip git build-essential        && \
+    apt-get install -y wget software-properties-common git build-essential              && \
     add-apt-repository -y ppa:ethereum/ethereum                                         && \
 
 # Install Go
@@ -25,28 +22,28 @@ RUN GO_RELEASE=go1.7.3.linux-amd64.tar.gz                                       
     rm -rf ${GO_RELEASE}                                                                && \
 
 # Clone Quorum and build binaries
-    # => Build will be based on version 1.1.0
+    # => Building from master
     git clone https://github.com/jpmorganchase/quorum.git                               && \
-    cd quorum                                                                           && \
-    git checkout tags/v1.1.0                                                            && \
+    cd quorum                                                                           && \    
     make all                                                                            && \
     # => Copy geth & bootnode binaries & Delete repo
     cp /quorum/build/bin/geth /usr/local/bin                                            && \
     cp /quorum/build/bin/bootnode /usr/local/bin                                        && \
     cd / && rm -rf /quorum                                                              && \
-    
-# Attach execute permissions to constellation
-    chmod 0755 /usr/local/bin/constellation-node                                       && \
-    chmod 0755 /usr/local/bin/constellation-enclave-keygen                              && \
+
+# Install Constellation
+# Download version 0.1.0
+    wget https://github.com/jpmorganchase/constellation/releases/download/v0.1.0/constellation-0.1.0-ubuntu1604.tar.xz  && \
+    tar -xJf constellation-0.1.0-ubuntu1604.tar.xz                                                                      && \
+    mv ./constellation-0.1.0-ubuntu1604/* /usr/local/bin                                                                && \
+    cd / && rm -rf /constellation-0.1.0-ubuntu1604 && rm -rf ./constellation-0.1.0-ubuntu1604.tar.xz                    && \
 
 # Clean up
-    apt-get remove --purge -y wget software-properties-common unzip build-essential git $(apt-mark showauto)    && \
+    apt-get remove --purge -y wget software-properties-common build-essential git $(apt-mark showauto)    && \
+
 # Install SOLC
     apt-get update                                                                      && \
 # Install SOLC and other dependencies for constellation
     apt-get install -y libdb-dev libsodium-dev zlib1g-dev libtinfo-dev libgmp-dev solc  && \
     rm -rf /var/lib/apt/lists/*                                                         && \
     rm -rf /usr/local/go
-
-
-
